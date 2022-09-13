@@ -3,25 +3,26 @@
 Created on Mon Sep 12 13:54:01 2022
 
 @author: ChrisZeThird
+
+I concive that this script is a bit of a mess. Most of the important steps are commented, but not systematically. The script starts by defining the equation
+of a circle and then settings different radius and 2 dots positions, which later will be used as the observation and light source points.
+A big part of the code will be repetitive so once you figured what part means, understanding the rest will be a piece of cake.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
-import intersection as inter
+import intersection as inter # correspond to the file interesection.py 
 
-theta = np.linspace(start=0,stop=2*np.pi,num=100) # Angle to make the full circle
+theta = np.linspace(start=0,stop=2*np.pi,num=100) # array of angles to make a full circle
 
-""" Functions """
+""" Function """
 
 def make_circle(r,theta):
     x = np.cos(theta)*r
     y = np.sin(theta)*r
     return x,y
-
-def rotation(alpha):
-    return np.array([[np.cos(alpha),-np.sin(alpha)],[np.sin(alpha),np.cos(alpha)]])
 
 """ Parameters """
 
@@ -50,7 +51,7 @@ x2,y2 = make_circle(r2,theta) # planet
 ## making the lines
 a,b = inter.line(x0,y0,x_o,y_o)
 N = 5
-X0 = np.linspace(start=x0,stop=x_o,num=N,endpoint=True)
+X0 = np.linspace(start=x0,stop=x_o,num=N,endpoint=True) # creating a linspace avoid an infinite line of equation ax+b, and doesn't require any additional arguments to truncate it
 line = a*X0 + b
 
 ## finding the intersection
@@ -147,7 +148,7 @@ def update(val):
     q.set_xdata(x_o_prime)
     q.set_ydata(y_o_prime)
     
-    A,B = inter.line(x_prime,y_prime,x_o_prime,y_o_prime)
+    A,B = inter.line(x_prime,y_prime,x_o_prime,y_o_prime) # new line equation between the new points of observation and of light source
     X = np.linspace(start=x_prime,stop=x_o_prime,num=N,endpoint=True)
     Line = A*X + B
     t.set_xdata(X)
@@ -160,7 +161,7 @@ def update(val):
     inter1 = inter.intersection(x_prime,y_prime,x_o_prime,y_o_prime,r1)
     if dots1 is not None:
         for l in dots1:
-            ax.lines.remove(l)
+            ax.lines.remove(l) # removes former lines corresponding to the intersecitons with the outter circle before computing the new one
     
     
     dots1 = inter.dots_plot2(inter1,ax)    
@@ -168,7 +169,7 @@ def update(val):
     inter2 = inter.intersection(x_prime,y_prime,x_o_prime,y_o_prime,r2)    
     if dots2 is not None:
         for l in dots2:
-            ax.lines.remove(l)
+            ax.lines.remove(l) # removes former lines corresponding to the intersecitons with the central circle before computing the new one
     
     dots2 = inter.dots_plot2(inter2,ax)    
     if len(inter2)>0:
