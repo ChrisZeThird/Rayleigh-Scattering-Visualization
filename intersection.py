@@ -5,6 +5,11 @@ Created on Mon Sep 12 20:03:32 2022
 @author: ChrisZeThird
 
 Source: https://mathworld.wolfram.com/Circle-LineIntersection.html
+
+The point of this script is to define a variety of functions useful to find the intersection of a line with a circle, the length of a line, or simply computer
+the equation of a line. Report to the comment above each function to understand its meaning, no docstring was written as most of the variables are explicit.
+You'll also find function create the plot of the line and its potential intersection with a circle. This file is necessary to run the other file called "circle.py"
+handling all of the figure settings such as sliders, buttons, and updating the line equations and intersections.
 """
 import numpy as np
 import matplotlib.pyplot as plt
