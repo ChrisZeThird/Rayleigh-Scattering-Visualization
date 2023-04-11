@@ -33,16 +33,11 @@ atm = vp.sphere(radius=atm_radius, opacity=0.25)
 # Define the light source
 light_type = 'sun'  # You can modify this using a drop-down menu
 light_wavelength = 550  # You can modify this using a slide cursor
-light_size = 0.1  # You can modify this using a slide cursor
+light_size = 2  # You can modify this using a slide cursor
 light_intensity = 1.0  # You can modify this using a slide cursor
 pos_drift = 50
 light_pos = vp.vector(atm_radius+pos_drift, atm_radius+pos_drift, atm_radius+pos_drift)
-if light_type == 'sun':
-    light = vp.local_light(pos=light_pos, color=vp.color.white)
-elif light_type == 'red_dwarf':
-    light = vp.local_light(pos=light_pos, color=vp.color.red)
-elif light_type == 'white_dwarf':
-    light = vp.local_light(pos=light_pos, color=vp.color.white, radius=0.1)
+light = vp.local_light(pos=light_pos, color=vp.color.red, radius=light_size)
 
 # Define the camera
 scene.autoscale = False
@@ -88,6 +83,21 @@ def set_x_position(slider):
     
 slider = vp.slider(min=-25, max=25, length=250, bind=set_x_position)
 
+# Create a menu to change the light colour
+def M(m):
+    global light
+    val = m.selected
+    if val == "sun": 
+        light.color = vp.color.white
+    elif val == "red": 
+        light.color = vp.color.red
+    elif val == "yellow": 
+        light.color = vp.color.yellow
+    elif val == "blue": 
+        light.color = vp.color.blue
+
+menu = vp.menu(choices=['sun', 'red', 'yellow', 'blue'], index=0, bind=M)
+
 # Define the exit function
 def exit_simulation():
     canvas.delete()
@@ -95,10 +105,6 @@ def exit_simulation():
 
 # Create the exit button
 exit_button = vp.button(bind=exit_simulation, text="Exit Simulation")
-# exit_button.background = "#FF0000"  # Set button background color to red
-# exit_button.foreground = "#FFFFFF"  # Set button text color to white
-# exit_button.pos = scene.title_anchor + vp.vec(100, 0, 0)  # Position the button on the canvas
-
 
 """ Run the simulation """
 
