@@ -21,7 +21,7 @@ scene = vp.scene
 
 # Define the planet
 planet_radius = 5
-planet_texture = 'planet.jpg'  # You can replace this with your own custom picture
+# planet_texture = 'planet.jpg'  # You can replace this with your own custom picture
 planet = vp.sphere(radius=planet_radius, texture=vp.textures.earth, shininess=0)
 
 # Define the atmosphere
@@ -85,7 +85,7 @@ slider = vp.slider(min=-25, max=25, length=250, bind=set_x_position)
 
 # Create a menu to change the light colour
 def M(m):
-    global light
+    global light, light_type
     val = m.selected
     if val == "sun": 
         light.color = vp.color.white
@@ -95,6 +95,7 @@ def M(m):
         light.color = vp.color.yellow
     elif val == "blue": 
         light.color = vp.color.blue
+    light_type = val
 
 menu = vp.menu(choices=['sun', 'red', 'yellow', 'blue'], index=0, bind=M)
 
@@ -118,15 +119,6 @@ while True:
     # Update the light source
     light.radius = light_size
     light.intensity = light_intensity
-    if light_type == 'sun':
-        light.color = vp.color.white
-    elif light_type == 'red_dwarf':
-        light.color = vp.color.red
-    elif light_type == 'white_dwarf':
-        light.color = vp.color.white
-    
+
     # Update the camera
     vp.scene.center = planet.pos
-    
-    # Update the planet texture
-    planet.texture = planet_texture
