@@ -14,24 +14,11 @@ import vpython as vp
 canvas = vp.canvas(width=1080, height=720)
 scene = vp.scene
 
-""" Create objects """
 
-# Define the planet
-planet_radius = 5
-# planet_texture = 'planet.jpg'  # You can replace this with your own custom picture
-planet = vp.sphere(radius=planet_radius, texture=vp.textures.earth, shininess=0)
+""" Define methods for objects properties """
 
 def atm_opacity(wavelength):
     return atm_density * (550 / wavelength)**4
-
-# Define the atmosphere
-atm_thickness = 3.0  # You can modify this using a slide cursor
-atm_density = 0.5  # You can modify this using a slide cursor
-atm_radius = planet.radius+atm_thickness
-atm = vp.sphere(radius=atm_radius, opacity=0.25)
-atm.opacity_function = atm_opacity
-
-# Define the light source
 
 def light_color(wavelength):
     r, g, b = 0, 0, 0
@@ -54,19 +41,34 @@ def light_color(wavelength):
         r = 1.0
     return vp.vector(r, g, b)
 
+
+""" Create objects """
+
+# Define the planet
+planet_radius = 5
+planet = vp.sphere(radius=planet_radius, texture=vp.textures.earth, shininess=0)
+
+# Define the atmosphere
+atm_thickness = 3.0  # You can modify this using a slide cursor
+atm_density = 0.5  # You can modify this using a slide cursor
+atm_radius = planet.radius+atm_thickness
+atm = vp.sphere(radius=atm_radius, opacity=0.25)
+atm.opacity_function = atm_opacity
+
+# Define the light source
 light_type = 'red'  # You can modify this using a drop-down menu
-# light_wavelength = 550  # You can modify this using a slide cursor
 light_size = 2  # You can modify this using a slide cursor
 light_intensity = 1.0  # You can modify this using a slide cursor
 pos_drift = 50
+
 light_xpos = atm_radius+pos_drift
 light_ypos = atm_radius+pos_drift
 light_zpos = atm_radius+pos_drift
+
 light_pos = vp.vector(light_xpos, light_ypos, light_zpos)
 wavelength = 400
 light = vp.local_light(pos=light_pos, color= light_color(wavelength), radius=light_size)
 light.color_function = light_color
-
 
 # Define the camera
 scene.autoscale = False
@@ -121,9 +123,6 @@ def set_rotation_angle(slider):
     # Set the position of the object
     light.pos = vp.vector(x, y, z)
 
-# Create the slider
-slider = vp.slider(wtitle='Rotate light source', min=0, max=360, step=1, value=0, bind=set_rotation_angle)
-
 # Create slider to change light source wavelength
 def WL_cursor(slider):
     val = slider.value
@@ -131,15 +130,22 @@ def WL_cursor(slider):
     global light
     light.color = new_wavelength
     
-slider = vp.slider(wtitle='Change light source color', min=400, max=700, length=250, bind=WL_cursor)
+# Create the slider
+slider_angle = vp.slider(wtitle='Rotate light source', min=0, max=360, step=1, value=0, bind=set_rotation_angle, right=15)
+canvas.append_to_caption('Slide the cursor to move the light source.')
+canvas.append_to_caption('\n\n')
+
+slider_WL = vp.slider(wtitle='Change light source color', min=400, max=700, length=250, bind=WL_cursor, right=15)
+canvas.append_to_caption('Slide the cursor to change the color of the light source.')
+canvas.append_to_caption('\n\n')
 
 # Define the white light button
 def white():
     global light
     light.color = vp.color.white
 
-# Create the exit button
-white_button = vp.button(bind=white, text="White light")
+white_button = vp.button(bind=white, text="White light", right=15)
+canvas.append_to_caption('\n\n')
 
 """ Run the simulation """
 
