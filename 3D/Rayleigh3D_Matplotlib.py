@@ -8,92 +8,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-""" Constants """
-radius_planet = 1.0         # Radius of planet
-radius_atmosphere = 2       # Radius of atmosphere
+# Constants
+radius_planet = 0.6         # Radius of planet
+radius_atmosphere = 1.2     # Radius of atmosphere
 height_atmosphere = 0.5     # Height of atmosphere
-
-rho0 = 1.225                # Air density at sea level
 num_particles = 5000        # Number of particles in atmosphere
-num_layers = 5             # Number of layers
-layer_heights = np.linspace(0, height_atmosphere, num_layers+1)[1:]
+radius_particles = 15       # Radius of the particles in atmosphere
 
-""" Generate random positions for particles in each layer """
+""" Define particles """
 
-# Function to calculate air density at a given altitude and random positions for particles in each layer
-def generate_particles(num_particles, radius_planet, radius_atmosphere, height_atmosphere):
-    """Generate random positions for particles with exponential density profile."""
-    # Constants
-    r_max = radius_atmosphere   # Maximum radius of atmosphere
+# Generate random positions for particles in atmosphere
+theta = np.random.uniform(0, 2*np.pi, num_particles)
+phi = np.random.uniform(0, np.pi, num_particles)
+r = radius_atmosphere * np.cbrt(np.random.uniform(0, 1, num_particles))
+x = r * np.sin(phi) * np.cos(theta)
+y = r * np.sin(phi) * np.sin(theta)
+z = r * np.cos(phi)
 
-    # Generate random positions for particles in a volume closer to the planet's surface
-    r_min = radius_planet
-    r = (r_max**3 - r_min**3) * np.random.uniform(0, 1, num_particles) + r_min**3
-    r = np.cbrt(r)
-    phi = np.random.uniform(0, 2*np.pi, num_particles)
-    costheta = np.random.uniform(-1, 1, num_particles)
-    theta = np.arccos(costheta)
+# Removes particles if they are inside the radius of the planet
+indices = np.sqrt(x**2 + y**2 + z**2) > radius_planet
+x_filtered = x[indices]
+y_filtered = y[indices]
+z_filtered = z[indices]
 
-    # Apply probability weighting based on distance from planet's center
-    p = np.exp(-(r - radius_planet)/height_atmosphere)
-    p /= np.max(p)
+num_particles_effective = len(x_filtered)
 
-    # Select particles based on weighted probability
-    selected = np.random.rand(num_particles) < p
+# Set up light source
+light_pos = np.array([3.0, 3.0, 3.0])
 
-    # Calculate positions of selected particles
-    r_selected = r[selected]
-    phi_selected = phi[selected]
-    theta_selected = theta[selected]
-    x = r_selected * np.sin(theta_selected) * np.cos(phi_selected)
-    y = r_selected * np.sin(theta_selected) * np.sin(phi_selected)
-    z = r_selected * np.cos(theta_selected)
-
-    # Calculate scattering color for particles
-    direction = np.array([0, 0, 1])
+# Calculate scattering
+colors = []
+for i in range(num_particles_effective):
+    pos = np.array([x_filtered[i], y_filtered[i], z_filtered[i]])
+    direction = pos - light_pos
+    direction = direction / np.linalg.norm(direction)
     angle = np.arccos(np.dot(direction, np.array([0, 0, 1])))
     color = np.exp(-0.5*(angle/0.2)**2)
-    colors = np.full(np.sum(selected), color)
-    
-    return x, y, z, colors
+    colors.append(color)
 
-x, y, z = [], [], []
-colors = []
-for i in range(num_layers):
-    x_layer, y_layer, z_layer, color_layer = generate_particles(num_particles, radius_planet, radius_atmosphere, height_atmosphere)
-    x.append(x_layer)
-    y.append(y_layer)
-    z.append(z_layer)
-    colors.append(color_layer)
-    
-# Combine all particle positions and colors
-x = np.concatenate(x)
-y = np.concatenate(y)
-z = np.concatenate(z)
-colors = np.concatenate(colors)
+""" Set planet and atmosphere positions """
 
-# Plot planet and atmosphere
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.set_aspect('equal')
-ax.set_axis_off()
-
+# Set planet position
 u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
 x_planet = radius_planet * np.cos(u) * np.sin(v)
 y_planet = radius_planet * np.sin(u) * np.sin(v)
 z_planet = radius_planet * np.cos(v)
+
+# Set atmosphere position
 x_atmosphere = radius_atmosphere * np.cos(u) * np.sin(v)
 y_atmosphere = radius_atmosphere * np.sin(u) * np.sin(v)
-z_atmosphere = radius_atmosphere * np.cos(v) # + height_atmosphere
+z_atmosphere = radius_atmosphere * np.cos(v) 
 
-ax.plot_surface(x_planet, y_planet, z_planet, color='navy')
-ax.plot_surface(x_atmosphere, y_atmosphere, z_atmosphere, color='white', alpha=0.1)
+""" Create figure """
 
-# Plot particles with colors
-ax.scatter(x, y, z, c=colors, s=5, alpha=0.2)
+# Set figure
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.set_aspect('equal')
+ax.set_axis_off() # remove axis 
 
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+# Set plot limits
+lim = radius_atmosphere + 0.5
+ax.set_xlim(-lim, lim)
+ax.set_ylim(-lim, lim)
+ax.set_zlim(-lim, lim)
+
+ax.plot_surface(x_planet, y_planet, z_planet, color='blue') # plot planet
+ax.plot_surface(x_atmosphere, y_atmosphere, z_atmosphere, color='white', alpha=0.2) # plot atmosphere
+ax.scatter(x_filtered, y_filtered, z_filtered, c=colors, s=radius_particles, alpha=0.3) # plot particles
 
 plt.show()
