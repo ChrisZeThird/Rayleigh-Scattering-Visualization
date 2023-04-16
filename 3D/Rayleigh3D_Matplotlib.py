@@ -5,15 +5,18 @@ Created on Sat Apr 15 10:20:54 2023
 @author: ChrisZeThird
 """
 import numpy as np
+
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, Button
 from mpl_toolkits.mplot3d import Axes3D
+
 
 # Constants
 radius_planet = 0.6         # Radius of planet
 radius_atmosphere = 1.2     # Radius of atmosphere
 height_atmosphere = 0.5     # Height of atmosphere
-num_particles = 5000        # Number of particles in atmosphere
-radius_particles = 15       # Radius of the particles in atmosphere
+num_particles = 4000        # Number of particles in atmosphere
+radius_particles = 20       # Radius of the particles in atmosphere
 
 """ Define particles """
 
@@ -33,18 +36,29 @@ z_filtered = z[indices]
 
 num_particles_effective = len(x_filtered)
 
-# Set up light source
-light_pos = np.array([3.0, 3.0, 3.0])
+# Set up light source initial position
+r_light = 3.0
+theta0 = 0
+phi0 = 0
+
+x_light = r_light * np.sin(phi0) * np.cos(theta0)
+y_light = r_light * np.sin(phi0) * np.sin(theta0)
+z_light = r_light * np.cos(phi0)
+light_pos = np.array([x_light, y_light, z_light])
 
 # Calculate scattering
-colors = []
-for i in range(num_particles_effective):
-    pos = np.array([x_filtered[i], y_filtered[i], z_filtered[i]])
-    direction = pos - light_pos
-    direction = direction / np.linalg.norm(direction)
-    angle = np.arccos(np.dot(direction, np.array([0, 0, 1])))
-    color = np.exp(-0.5*(angle/0.2)**2)
-    colors.append(color)
+def calculate_scattering(num_particles,x_particles,y_particles,z_particles,light_pos):
+    colors = []
+    for i in range(num_particles_effective):
+        pos = np.array([x_particles[i], y_particles[i], z_particles[i]])
+        direction = pos - light_pos
+        direction = direction / np.linalg.norm(direction)
+        angle = np.arccos(np.dot(direction, np.array([0, 0, 1])))
+        color = np.exp(-0.5*(angle/0.2)**2)
+        colors.append(color)
+    return colors
+
+colors = calculate_scattering(num_particles_effective,x_filtered,y_filtered,z_filtered,light_pos)
 
 """ Set planet and atmosphere positions """
 
@@ -62,19 +76,60 @@ z_atmosphere = radius_atmosphere * np.cos(v)
 """ Create figure """
 
 # Set figure
-fig = plt.figure()
+fig = plt.figure(figsize=(10,10))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_aspect('equal')
 ax.set_axis_off() # remove axis 
 
 # Set plot limits
-lim = radius_atmosphere + 0.5
+lim = radius_atmosphere + 0.1
 ax.set_xlim(-lim, lim)
 ax.set_ylim(-lim, lim)
 ax.set_zlim(-lim, lim)
 
 ax.plot_surface(x_planet, y_planet, z_planet, color='blue') # plot planet
 ax.plot_surface(x_atmosphere, y_atmosphere, z_atmosphere, color='white', alpha=0.2) # plot atmosphere
-ax.scatter(x_filtered, y_filtered, z_filtered, c=colors, s=radius_particles, alpha=0.3) # plot particles
+particles_scatter = ax.scatter(x_filtered, y_filtered, z_filtered, c=colors, s=radius_particles, alpha=0.5) # plot particles
+
+# Set sliders to change light source position
+
+theta_slider_ax = plt.axes([0.25, 0.1, 0.65, 0.03])
+theta_slider = Slider(theta_slider_ax, 'Theta', 0, 2 * np.pi, valinit=0)
+phi_slider_ax = plt.axes([0.25, 0.05, 0.65, 0.03])
+phi_slider = Slider(phi_slider_ax, 'Phi', 0, np.pi, valinit=0)
+button_ax = plt.axes([0.8, 0.015, 0.1, 0.04])
+button = Button(button_ax, 'Reset', color='lightgray', hovercolor='0.975')
+
+def update(val):
+    theta = theta_slider.val
+    phi = phi_slider.val
+    
+    x_light = r_light * np.sin(phi) * np.cos(theta)
+    y_light = r_light * np.sin(phi) * np.sin(theta)
+    z_light = r_light * np.cos(phi)
+    
+    # ax.clear()
+    global colors, particles_scatter
+    light_pos  = np.array([x_light, y_light, z_light])
+    colors = calculate_scattering(num_particles_effective,x_filtered,y_filtered,z_filtered,light_pos)
+    
+    # Redraw scatter plot
+    particles_scatter.remove()
+    particles_scatter = ax.scatter(x_filtered, y_filtered, z_filtered, c=colors, s=radius_particles, alpha=0.5) # plot particles
+    
+    # rgba_colors = np.zeros((len(colors), 4))
+    # rgba_colors[:, :3] = np.array(colors)[:, np.newaxis]
+    # # rgba_colors[:, 3] = 0.5  # set alpha to 0.5
+    # particles_scatter.set_facecolor(rgba_colors)
+
+    fig.canvas.draw_idle()
+
+def reset(event):
+    theta_slider.reset()
+    phi_slider.reset()
+    
+theta_slider.on_changed(update)
+phi_slider.on_changed(update)
+button.on_clicked(reset)
 
 plt.show()
